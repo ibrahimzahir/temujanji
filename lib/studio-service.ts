@@ -3,6 +3,7 @@ import type {
   CreateAnalyticsInput,
   CreateOrderInput,
   CreateTeamMemberInput,
+  CreateTrafficHitInput,
   StudioDashboardPayload,
   UpdateOrderInput,
   UpdateTeamMemberInput,
@@ -142,12 +143,94 @@ function buildDummyAnalytics(): Array<{
   return rows;
 }
 
+const DUMMY_TRAFFIC_HITS = [
+  {
+    path: "/",
+    pageTitle: "Beranda Studio Temu Janji",
+    location: "Jakarta, ID",
+    deviceType: "Mobile",
+    os: "iOS 19",
+    browser: "Safari",
+    hits: 3420,
+    uniqueVisitors: 2610,
+    avgDurationSec: 142,
+  },
+  {
+    path: "/desain/senja-di-taman",
+    pageTitle: "Tema Senja di Taman",
+    location: "Bandung, ID",
+    deviceType: "Mobile",
+    os: "Android 15",
+    browser: "Chrome",
+    hits: 2180,
+    uniqueVisitors: 1740,
+    avgDurationSec: 118,
+  },
+  {
+    path: "/desain/irama-pusaka",
+    pageTitle: "Tema Irama Pusaka",
+    location: "Yogyakarta, ID",
+    deviceType: "Desktop",
+    os: "macOS",
+    browser: "Chrome",
+    hits: 1490,
+    uniqueVisitors: 1120,
+    avgDurationSec: 164,
+  },
+  {
+    path: "/desain/sejauh-mata",
+    pageTitle: "Tema Sejauh Mata",
+    location: "Surabaya, ID",
+    deviceType: "Mobile",
+    os: "iOS 19",
+    browser: "Safari",
+    hits: 1310,
+    uniqueVisitors: 980,
+    avgDurationSec: 109,
+  },
+  {
+    path: "/pesan/senja-di-taman",
+    pageTitle: "Formulir Pesanan Tema",
+    location: "Jakarta, ID",
+    deviceType: "Desktop",
+    os: "Windows 11",
+    browser: "Edge",
+    hits: 890,
+    uniqueVisitors: 720,
+    avgDurationSec: 215,
+  },
+  {
+    path: "/undangan/tamu",
+    pageTitle: "Undangan Tamu Personal",
+    location: "Medan, ID",
+    deviceType: "Mobile",
+    os: "Android 15",
+    browser: "Chrome",
+    hits: 2840,
+    uniqueVisitors: 2390,
+    avgDurationSec: 94,
+  },
+  {
+    path: "/akun",
+    pageTitle: "Ruang Klien & RSVP",
+    location: "Bali, ID",
+    deviceType: "Tablet",
+    os: "iPadOS",
+    browser: "Safari",
+    hits: 620,
+    uniqueVisitors: 480,
+    avgDurationSec: 188,
+  },
+];
+
 export async function ensureStudioSeeded() {
-  const [orderCount, memberCount, analyticsCount] = await Promise.all([
-    db.studioOrderRecord.count(),
-    db.studioMember.count(),
-    db.analyticsDaily.count(),
-  ]);
+  const [orderCount, memberCount, analyticsCount, trafficCount] =
+    await Promise.all([
+      db.studioOrderRecord.count(),
+      db.studioMember.count(),
+      db.analyticsDaily.count(),
+      db.trafficHit.count(),
+    ]);
 
   if (memberCount === 0) {
     await db.studioMember.createMany({
@@ -166,6 +249,12 @@ export async function ensureStudioSeeded() {
       skipDuplicates: true,
     });
   }
+  if (trafficCount === 0) {
+    await db.trafficHit.createMany({
+      data: DUMMY_TRAFFIC_HITS,
+      skipDuplicates: true,
+    });
+  }
 }
 
 export async function reseedStudioDummyData() {
@@ -173,6 +262,7 @@ export async function reseedStudioDummyData() {
     db.studioOrderRecord.deleteMany(),
     db.studioMember.deleteMany(),
     db.analyticsDaily.deleteMany(),
+    db.trafficHit.deleteMany(),
   ]);
   await ensureStudioSeeded();
   return getStudioDashboardPayload();
@@ -181,12 +271,14 @@ export async function reseedStudioDummyData() {
 export async function getStudioDashboardPayload(): Promise<StudioDashboardPayload> {
   await ensureStudioSeeded();
 
-  const [orders, team, analytics, publishedThemesCount] = await Promise.all([
-    db.studioOrderRecord.findMany({ orderBy: { createdAt: "desc" } }),
-    db.studioMember.findMany({ orderBy: { createdAt: "asc" } }),
-    db.analyticsDaily.findMany({ orderBy: { date: "asc" } }),
-    db.designTemplate.count({ where: { published: true } }),
-  ]);
+  const [orders, team, analytics, trafficHits, publishedThemesCount] =
+    await Promise.all([
+      db.studioOrderRecord.findMany({ orderBy: { createdAt: "desc" } }),
+      db.studioMember.findMany({ orderBy: { createdAt: "asc" } }),
+      db.analyticsDaily.findMany({ orderBy: { date: "asc" } }),
+      db.trafficHit.findMany({ orderBy: { hits: "desc" } }),
+      db.designTemplate.count({ where: { published: true } }),
+    ]);
 
   const paidOrders = orders.filter((o) => o.paymentStatus === "PAID");
   const totalRevenue = paidOrders.reduce((acc, o) => acc + o.amount, 0);
@@ -223,6 +315,18 @@ export async function getStudioDashboardPayload(): Promise<StudioDashboardPayloa
       mobileViews: a.mobileViews,
       rsvpSubmitted: a.rsvpSubmitted,
       inquiries: a.inquiries,
+    })),
+    trafficHits: trafficHits.map((t) => ({
+      id: t.id,
+      path: t.path,
+      pageTitle: t.pageTitle,
+      location: t.location,
+      deviceType: t.deviceType,
+      os: t.os,
+      browser: t.browser,
+      hits: t.hits,
+      uniqueVisitors: t.uniqueVisitors,
+      avgDurationSec: t.avgDurationSec,
     })),
   };
 }
@@ -406,6 +510,38 @@ export async function upsertAnalyticsDaily(input: CreateAnalyticsInput) {
       mobileViews: input.mobileViews,
       rsvpSubmitted: input.rsvpSubmitted,
       inquiries: input.inquiries,
+    },
+  });
+  return getStudioDashboardPayload();
+}
+
+export async function upsertTrafficHit(input: CreateTrafficHitInput) {
+  await db.trafficHit.upsert({
+    where: {
+      path_location_deviceType: {
+        path: input.path,
+        location: input.location,
+        deviceType: input.deviceType,
+      },
+    },
+    create: {
+      path: input.path,
+      pageTitle: input.pageTitle,
+      location: input.location,
+      deviceType: input.deviceType,
+      os: input.os,
+      browser: input.browser,
+      hits: input.hits,
+      uniqueVisitors: input.uniqueVisitors,
+      avgDurationSec: input.avgDurationSec,
+    },
+    update: {
+      pageTitle: input.pageTitle,
+      os: input.os,
+      browser: input.browser,
+      hits: { increment: input.hits },
+      uniqueVisitors: { increment: input.uniqueVisitors },
+      avgDurationSec: input.avgDurationSec,
     },
   });
   return getStudioDashboardPayload();

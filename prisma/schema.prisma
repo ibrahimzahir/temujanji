@@ -261,3 +261,20 @@ model BackupSnapshot {
 
   @@index([createdAt])
 }
+
+model TrafficHit {
+  id             String   @id @default(cuid())
+  path           String
+  pageTitle      String
+  location       String
+  deviceType     String
+  os             String
+  browser        String
+  hits           Int      @default(1)
+  uniqueVisitors Int      @default(1)
+  avgDurationSec Int      @default(45)
+  updatedAt      DateTime @updatedAt
+
+  @@unique([path, location, deviceType])
+  @@index([hits])
+}

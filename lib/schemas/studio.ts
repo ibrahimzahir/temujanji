@@ -82,6 +82,37 @@ export const createAnalyticsSchema = z.object({
 });
 export type CreateAnalyticsInput = z.infer<typeof createAnalyticsSchema>;
 
+export const createTrafficHitSchema = z.object({
+  path: z
+    .string()
+    .trim()
+    .min(1, "Path halaman wajib diisi")
+    .startsWith("/", "Path harus diawali /"),
+  pageTitle: z.string().trim().min(2, "Judul halaman minimal 2 karakter").max(80),
+  location: z.string().trim().min(2, "Lokasi wajib diisi").max(60),
+  deviceType: z.enum(["Mobile", "Desktop", "Tablet"]),
+  os: z.string().trim().min(2).max(40),
+  browser: z.string().trim().min(2).max(40),
+  hits: z.coerce.number().int().min(1).max(1000000),
+  uniqueVisitors: z.coerce.number().int().min(1).max(1000000),
+  avgDurationSec: z.coerce.number().int().min(1).max(3600).default(60),
+});
+export type CreateTrafficHitInput = z.infer<typeof createTrafficHitSchema>;
+
+export const trafficHitRecordSchema = z.object({
+  id: z.string(),
+  path: z.string(),
+  pageTitle: z.string(),
+  location: z.string(),
+  deviceType: z.string(),
+  os: z.string(),
+  browser: z.string(),
+  hits: z.number(),
+  uniqueVisitors: z.number(),
+  avgDurationSec: z.number(),
+});
+export type TrafficHitRecordDTO = z.infer<typeof trafficHitRecordSchema>;
+
 export const studioOrderRecordSchema = z.object({
   id: z.string(),
   coupleName: z.string(),
@@ -138,6 +169,7 @@ export const studioDashboardPayloadSchema = z.object({
   orders: z.array(studioOrderRecordSchema),
   team: z.array(studioMemberRecordSchema),
   analytics: z.array(analyticsDailyRecordSchema),
+  trafficHits: z.array(trafficHitRecordSchema),
 });
 export type StudioDashboardPayload = z.infer<typeof studioDashboardPayloadSchema>;
 

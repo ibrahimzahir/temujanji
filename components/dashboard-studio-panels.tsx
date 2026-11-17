@@ -15,10 +15,15 @@ import {
   Ban,
   CheckCircle2,
   Clock,
+  Globe,
+  Laptop,
+  MapPin,
   PauseCircle,
   Plus,
   RefreshCw,
   Shield,
+  Smartphone,
+  Tablet,
   Trash2,
   Undo2,
   Users,
@@ -63,6 +68,7 @@ import {
   createAnalyticsSchema,
   createOrderSchema,
   createTeamMemberSchema,
+  createTrafficHitSchema,
   type StudioDashboardPayload,
   type StudioRoleType,
 } from "@/lib/schemas/studio";
@@ -522,170 +528,431 @@ export function AnalyticsPanel({
     }
   });
 
+  const trafficForm = useZodForm({
+    schema: createTrafficHitSchema,
+    defaultValues: {
+      path: "/desain/aksara-rasa",
+      pageTitle: "Tema Aksara Rasa",
+      location: "Semarang, ID",
+      deviceType: "Mobile",
+      os: "Android 15",
+      browser: "Chrome",
+      hits: 120,
+      uniqueVisitors: 95,
+      avgDurationSec: 112,
+    },
+  });
+
+  const onSubmitTraffic = trafficForm.handleSubmit(async (data) => {
+    try {
+      const updated = await studioFetch(
+        "/api/studio/traffic",
+        "POST",
+        role,
+        data
+      );
+      onPayloadChange(updated);
+      toast.success(`Hit trafik ${data.path} (${data.location}) disimpan`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menyimpan trafik");
+    }
+  });
+
+  const totalTrafficHits = payload.trafficHits.reduce(
+    (sum, item) => sum + item.hits,
+    0
+  );
+
+  const locationBreakdown = React.useMemo(() => {
+    const map = new Map<string, number>();
+    for (const row of payload.trafficHits) {
+      map.set(row.location, (map.get(row.location) ?? 0) + row.hits);
+    }
+    return Array.from(map.entries())
+      .map(([location, hits]) => ({
+        location,
+        hits,
+        pct: totalTrafficHits ? Math.round((hits / totalTrafficHits) * 100) : 0,
+      }))
+      .sort((a, b) => b.hits - a.hits);
+  }, [payload.trafficHits, totalTrafficHits]);
+
+  const deviceBreakdown = React.useMemo(() => {
+    const map = new Map<string, number>();
+    for (const row of payload.trafficHits) {
+      map.set(row.deviceType, (map.get(row.deviceType) ?? 0) + row.hits);
+    }
+    return Array.from(map.entries())
+      .map(([deviceType, hits]) => ({
+        deviceType,
+        hits,
+        pct: totalTrafficHits ? Math.round((hits / totalTrafficHits) * 100) : 0,
+      }))
+      .sort((a, b) => b.hits - a.hits);
+  }, [payload.trafficHits, totalTrafficHits]);
+
   return (
-    <div className="grid grid-cols-1 gap-4 px-4 lg:grid-cols-12 lg:px-6">
-      <Card className="border-border/80 lg:col-span-8">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
+    <div className="space-y-4 px-4 lg:px-6">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <Card className="border-border/80 lg:col-span-8">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="font-sans text-base font-semibold">
+                Analitik Kunjungan &amp; RSVP Harian
+              </CardTitle>
+              <CardDescription>
+                Total {payload.summary.totalViews30d.toLocaleString("id-ID")} tayangan undangan tercatat di database.
+              </CardDescription>
+            </div>
+            <Badge variant="secondary">14 Hari Terakhir</Badge>
+          </CardHeader>
+          <CardContent className="h-[300px] pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={payload.analytics}>
+                <defs>
+                  <linearGradient id="fillMobile" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#5b236b" stopOpacity={0.35} />
+                    <stop offset="95%" stopColor="#5b236b" stopOpacity={0.02} />
+                  </linearGradient>
+                  <linearGradient id="fillDesktop" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#d4af37" stopOpacity={0.35} />
+                    <stop offset="95%" stopColor="#d4af37" stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid vertical={false} stroke="#efe8f3" />
+                <XAxis
+                  dataKey="date"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  tickFormatter={(v: string) => v.slice(5)}
+                  fontSize={12}
+                />
+                <YAxis tickLine={false} axisLine={false} fontSize={12} width={40} />
+                <Tooltip />
+                <Area
+                  type="monotone"
+                  dataKey="mobileViews"
+                  name="Mobile"
+                  stroke="#5b236b"
+                  fill="url(#fillMobile)"
+                  strokeWidth={2}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="desktopViews"
+                  name="Desktop"
+                  stroke="#d4af37"
+                  fill="url(#fillDesktop)"
+                  strokeWidth={2}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/80 lg:col-span-4">
+          <CardHeader>
             <CardTitle className="font-sans text-base font-semibold">
-              Analitik Kunjungan &amp; RSVP Harian
+              Catat / Perbarui Metrik Harian
             </CardTitle>
             <CardDescription>
-              Total {payload.summary.totalViews30d.toLocaleString("id-ID")} tayangan undangan tercatat di database.
+              Upsert data analitik ke Prisma berdasarkan tanggal.
             </CardDescription>
-          </div>
-          <Badge variant="secondary">14 Hari Terakhir</Badge>
-        </CardHeader>
-        <CardContent className="h-[300px] pt-2">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={payload.analytics}>
-              <defs>
-                <linearGradient id="fillMobile" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#5b236b" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="#5b236b" stopOpacity={0.02} />
-                </linearGradient>
-                <linearGradient id="fillDesktop" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#d4af37" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="#d4af37" stopOpacity={0.02} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid vertical={false} stroke="#efe8f3" />
-              <XAxis
-                dataKey="date"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                tickFormatter={(v: string) => v.slice(5)}
-                fontSize={12}
+          </CardHeader>
+          <CardContent>
+            <Form form={form} onSubmit={onSubmit}>
+              <FormField
+                form={form}
+                name="date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tanggal (YYYY-MM-DD)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="date"
+                        value={field.value}
+                        onChange={(e) => field.onChange(e.target.value)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              <YAxis tickLine={false} axisLine={false} fontSize={12} width={40} />
-              <Tooltip />
-              <Area
-                type="monotone"
-                dataKey="mobileViews"
-                name="Mobile"
-                stroke="#5b236b"
-                fill="url(#fillMobile)"
-                strokeWidth={2}
-              />
-              <Area
-                type="monotone"
-                dataKey="desktopViews"
-                name="Desktop"
-                stroke="#d4af37"
-                fill="url(#fillDesktop)"
-                strokeWidth={2}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  form={form}
+                  name="mobileViews"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Kunjungan Mobile</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          value={field.value}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  form={form}
+                  name="desktopViews"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Kunjungan Desktop</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          value={field.value}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  form={form}
+                  name="rsvpSubmitted"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>RSVP Masuk</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          value={field.value}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  form={form}
+                  name="inquiries"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Konsultasi WA</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          value={field.value}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <Button type="submit" disabled={form.isSubmitting} className="w-full gap-1.5">
+                <RefreshCw className="size-4" />
+                {form.isSubmitting ? "Menyimpan..." : "Simpan Data Analitik"}
+              </Button>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
 
-      <Card className="border-border/80 lg:col-span-4">
-        <CardHeader>
-          <CardTitle className="font-sans text-base font-semibold">
-            Catat / Perbarui Metrik Harian
-          </CardTitle>
-          <CardDescription>
-            Upsert data analitik ke Prisma berdasarkan tanggal.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form form={form} onSubmit={onSubmit}>
-            <FormField
-              form={form}
-              name="date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tanggal (YYYY-MM-DD)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="date"
-                      value={field.value}
-                      onChange={(e) => field.onChange(e.target.value)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <FormField
-                form={form}
-                name="mobileViews"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Kunjungan Mobile</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        value={field.value}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                form={form}
-                name="desktopViews"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Kunjungan Desktop</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        value={field.value}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                form={form}
-                name="rsvpSubmitted"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>RSVP Masuk</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        value={field.value}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                form={form}
-                name="inquiries"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Konsultasi WA</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        value={field.value}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+      {/* Web Traffic Breakdown: Top Pages + Locations + Devices */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <Card className="border-border/80 lg:col-span-6">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 font-sans text-base font-semibold">
+                <Globe className="size-4 text-primary" />
+                Halaman Paling Banyak Dikunjungi
+              </CardTitle>
+              <CardDescription>
+                Urutan rute dengan hit tertinggi ({totalTrafficHits.toLocaleString("id-ID")} total hits).
+              </CardDescription>
             </div>
-            <Button type="submit" disabled={form.isSubmitting} className="w-full gap-1.5">
-              <RefreshCw className="size-4" />
-              {form.isSubmitting ? "Menyimpan..." : "Simpan Data Analitik"}
-            </Button>
-          </Form>
-        </CardContent>
-      </Card>
+            <Badge variant="secondary">{payload.trafficHits.length} Rute</Badge>
+          </CardHeader>
+          <CardContent className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Halaman</TableHead>
+                  <TableHead>Lokasi &amp; Perangkat</TableHead>
+                  <TableHead className="text-right">Hits</TableHead>
+                  <TableHead className="text-right">Unik</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {payload.trafficHits.map((row) => (
+                  <TableRow key={row.id}>
+                    <TableCell>
+                      <div className="font-mono text-xs font-medium">{row.path}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {row.pageTitle} · {row.avgDurationSec}s avg
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-xs">{row.location}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {row.deviceType} · {row.os} · {row.browser}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right text-xs font-semibold tabular-nums">
+                      {row.hits.toLocaleString("id-ID")}
+                    </TableCell>
+                    <TableCell className="text-right text-xs tabular-nums text-muted-foreground">
+                      {row.uniqueVisitors.toLocaleString("id-ID")}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/80 lg:col-span-3">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 font-sans text-base font-semibold">
+              <MapPin className="size-4 text-primary" />
+              Lokasi Pengunjung
+            </CardTitle>
+            <CardDescription>Distribusi kota dengan hit terbanyak.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {locationBreakdown.map((loc) => (
+              <div key={loc.location} className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium">{loc.location}</span>
+                  <span className="tabular-nums text-muted-foreground">
+                    {loc.hits.toLocaleString("id-ID")} ({loc.pct}%)
+                  </span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+                  <div
+                    className="h-full rounded-full bg-primary"
+                    style={{ width: `${loc.pct}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/80 lg:col-span-3">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 font-sans text-base font-semibold">
+              <Smartphone className="size-4 text-primary" />
+              Perangkat Pengguna
+            </CardTitle>
+            <CardDescription>Proporsi Mobile, Desktop, dan Tablet.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {deviceBreakdown.map((dev) => {
+              const Icon =
+                dev.deviceType === "Mobile"
+                  ? Smartphone
+                  : dev.deviceType === "Tablet"
+                    ? Tablet
+                    : Laptop;
+              return (
+                <div key={dev.deviceType} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <Icon className="size-3.5 text-primary" />
+                      {dev.deviceType}
+                    </span>
+                    <span className="tabular-nums text-muted-foreground">
+                      {dev.hits.toLocaleString("id-ID")} ({dev.pct}%)
+                    </span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+                    <div
+                      className="h-full rounded-full bg-primary"
+                      style={{ width: `${dev.pct}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+
+            <div className="border-t border-border/80 pt-3">
+              <p className="mb-2 text-xs font-semibold">Simulasi / Catat Hit Halaman</p>
+              <Form form={trafficForm} onSubmit={onSubmitTraffic}>
+                <FormField
+                  form={trafficForm}
+                  name="path"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Path</FormLabel>
+                      <FormControl>
+                        <Input
+                          value={field.value}
+                          onChange={(e) => field.onChange(e.target.value)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <FormField
+                    form={trafficForm}
+                    name="location"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Lokasi</FormLabel>
+                        <FormControl>
+                          <Input
+                            value={field.value}
+                            onChange={(e) => field.onChange(e.target.value)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    form={trafficForm}
+                    name="deviceType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Perangkat</FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={(v) =>
+                            field.onChange(v as "Mobile" | "Desktop" | "Tablet")
+                          }
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Mobile">Mobile</SelectItem>
+                            <SelectItem value="Desktop">Desktop</SelectItem>
+                            <SelectItem value="Tablet">Tablet</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={trafficForm.isSubmitting}
+                  className="w-full"
+                >
+                  {trafficForm.isSubmitting ? "Menyimpan..." : "Catat Hit Trafik"}
+                </Button>
+              </Form>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
