@@ -83,6 +83,12 @@ const data = {
       url: "/dashboard?tab=tim",
       icon: Users,
     },
+    {
+      key: "dev",
+      title: "Developer & Infra",
+      url: "/dashboard?tab=dev",
+      icon: ShieldCheck,
+    },
   ],
   projects: [
     {

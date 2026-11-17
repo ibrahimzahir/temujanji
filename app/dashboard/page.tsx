@@ -12,6 +12,7 @@ import {
   OrdersRsvpPanel,
   TeamAccessPanel,
 } from "@/components/dashboard-studio-panels";
+import { DevConsolePanel } from "@/components/dashboard-dev-panel";
 import { SectionCards } from "@/components/section-cards";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -48,7 +49,8 @@ type DashboardSectionKey =
   | "koleksi"
   | "pesanan"
   | "analitik"
-  | "tim";
+  | "tim"
+  | "dev";
 
 const SECTION_LABELS: Record<DashboardSectionKey, string> = {
   ringkasan: "Ringkasan Studio",
@@ -56,6 +58,7 @@ const SECTION_LABELS: Record<DashboardSectionKey, string> = {
   pesanan: "Pesanan & RSVP",
   analitik: "Analitik Kunjungan",
   tim: "Tim & Hak Akses",
+  dev: "Developer & Infra",
 };
 
 export default function DashboardPage() {
@@ -252,6 +255,8 @@ export default function DashboardPage() {
               onPayloadChange={setPayload}
             />
           )}
+
+          {activeSection === "dev" && <DevConsolePanel role={role} />}
         </div>
       </SidebarInset>
     </SidebarProvider>

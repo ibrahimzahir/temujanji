@@ -218,3 +218,37 @@ model AnalyticsDaily {
 
   @@index([date])
 }
+
+model SystemConfig {
+  id                 String   @id @default("default")
+  maintenanceMode    Boolean  @default(false)
+  maintenanceMessage String   @default("Studio sedang melakukan pemeliharaan terjadwal. Kami segera kembali.")
+  dailyBackupEnabled Boolean  @default(true)
+  backupRetentionDay Int      @default(30)
+  updatedBy          String   @default("dev")
+  updatedAt          DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorRole String
+  action    String
+  target    String
+  detail    String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model BackupSnapshot {
+  id          String   @id @default(cuid())
+  label       String
+  type        String   @default("DAILY_AUTO")
+  status      String   @default("SUCCESS")
+  sizeKb      Int
+  tablesCount Int
+  checksum    String
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+}

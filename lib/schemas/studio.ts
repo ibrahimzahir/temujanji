@@ -131,3 +131,132 @@ export const studioDashboardPayloadSchema = z.object({
   analytics: z.array(analyticsDailyRecordSchema),
 });
 export type StudioDashboardPayload = z.infer<typeof studioDashboardPayloadSchema>;
+
+export const updateSystemConfigSchema = z.object({
+  maintenanceMode: z.boolean(),
+  maintenanceMessage: z
+    .string()
+    .trim()
+    .min(5, "Pesan pemeliharaan minimal 5 karakter")
+    .max(300, "Pesan maksimal 300 karakter"),
+  dailyBackupEnabled: z.boolean().default(true),
+  backupRetentionDay: z.coerce.number().int().min(7).max(365).default(30),
+});
+export type UpdateSystemConfigInput = z.infer<typeof updateSystemConfigSchema>;
+
+export const createBackupSchema = z.object({
+  label: z
+    .string()
+    .trim()
+    .min(3, "Label backup minimal 3 karakter")
+    .max(80, "Label maksimal 80 karakter"),
+});
+export type CreateBackupInput = z.infer<typeof createBackupSchema>;
+
+export const devActionSchema = z.discriminatedUnion("action", [
+  z.object({
+    action: z.literal("healthcheck"),
+  }),
+  z.object({
+    action: z.literal("maintenance"),
+    payload: updateSystemConfigSchema,
+  }),
+  z.object({
+    action: z.literal("backup"),
+    payload: createBackupSchema,
+  }),
+]);
+export type DevActionInput = z.infer<typeof devActionSchema>;
+
+export const devConsolePayloadSchema = z.object({
+  systemConfig: z.object({
+    maintenanceMode: z.boolean(),
+    maintenanceMessage: z.string(),
+    dailyBackupEnabled: z.boolean(),
+    backupRetentionDay: z.number(),
+    updatedBy: z.string(),
+    updatedAt: z.string(),
+  }),
+  health: z.object({
+    status: z.enum(["HEALTHY", "DEGRADED", "MAINTENANCE"]),
+    dbConnected: z.boolean(),
+    dbLatencyMs: z.number(),
+    nodeVersion: z.string(),
+    platform: z.string(),
+    uptimeSec: z.number(),
+    memoryMb: z.object({
+      rss: z.number(),
+      heapUsed: z.number(),
+      heapTotal: z.number(),
+    }),
+    envChecks: z.array(
+      z.object({
+        key: z.string(),
+        present: z.boolean(),
+        note: z.string(),
+      })
+    ),
+    checkedAt: z.string(),
+  }),
+  databaseTables: z.array(
+    z.object({
+      table: z.string(),
+      rows: z.number(),
+    })
+  ),
+  apiEndpoints: z.array(
+    z.object({
+      path: z.string(),
+      methods: z.string(),
+      auth: z.string(),
+      status: z.enum(["ONLINE", "PROTECTED"]),
+    })
+  ),
+  packages: z.array(
+    z.object({
+      name: z.string(),
+      version: z.string(),
+      category: z.enum(["Framework", "Database", "Auth & Validation", "UI & Motion"]),
+    })
+  ),
+  advisories: z.array(
+    z.object({
+      id: z.string(),
+      severity: z.enum(["INFO", "WARN", "ACTION"]),
+      title: z.string(),
+      detail: z.string(),
+    })
+  ),
+  backups: z.array(
+    z.object({
+      id: z.string(),
+      label: z.string(),
+      type: z.string(),
+      status: z.string(),
+      sizeKb: z.number(),
+      tablesCount: z.number(),
+      checksum: z.string(),
+      createdAt: z.string(),
+    })
+  ),
+  recommendations: z.array(
+    z.object({
+      id: z.string(),
+      priority: z.enum(["HIGH", "MEDIUM", "LOW"]),
+      title: z.string(),
+      description: z.string(),
+    })
+  ),
+  auditLogs: z.array(
+    z.object({
+      id: z.string(),
+      actorRole: z.string(),
+      action: z.string(),
+      target: z.string(),
+      detail: z.string(),
+      createdAt: z.string(),
+    })
+  ),
+});
+export type DevConsolePayload = z.infer<typeof devConsolePayloadSchema>;
+
