@@ -30,7 +30,7 @@ export const PATCH = withStudioApi(
 );
 
 export const DELETE = withStudioApi(
-  { roles: ["admin", "dev"], schema: deleteByIdSchema },
+  { roles: ["admin", "dev", "editor"], schema: deleteByIdSchema },
   async ({ data }) => {
     const payload = await deleteStudioOrder(data.id);
     return NextResponse.json(payload);

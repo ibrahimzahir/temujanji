@@ -62,7 +62,7 @@ export const ROLE_PERMISSIONS: Record<
   editor: {
     label: "Editor",
     badge: "Kurator Konten",
-    description: "Menyunting teks Hero, tombol CTA, pratinjau undangan, dan daftar tamu.",
+    description: "CRUD penuh kartu undangan, tema koleksi, Hero, Proses, Paket, Testimoni, FAQ, Footer, dan pesanan RSVP.",
     canEditHero: true,
     canManageOrders: true,
     canManageRoles: false,

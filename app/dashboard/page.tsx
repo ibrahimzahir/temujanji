@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { AppSidebar } from "@/components/app-sidebar";
 import { DashboardCollectionManager } from "@/components/dashboard-collection-manager";
 import { DashboardHeroManager } from "@/components/dashboard-hero-manager";
+import { DashboardSectionsManager } from "@/components/dashboard-sections-manager";
 import {
   AnalyticsPanel,
   OrdersRsvpPanel,
@@ -227,8 +228,9 @@ export default function DashboardPage() {
           )}
 
           {activeSection === "koleksi" && (
-            <div className="space-y-4 px-4 lg:px-6">
+            <div className="space-y-6 px-4 lg:px-6">
               <DashboardCollectionManager role={role} />
+              <DashboardSectionsManager role={role} />
             </div>
           )}
 

@@ -476,12 +476,7 @@ export function OrdersRsvpPanel({
                     <Button
                       variant="ghost"
                       size="icon"
-                      disabled={role === "editor"}
-                      title={
-                        role === "editor"
-                          ? "Hanya Admin/Dev yang dapat menghapus"
-                          : "Hapus pesanan"
-                      }
+                      title="Hapus pesanan"
                       onClick={() => handleDeleteOrder(order.id, order.coupleName)}
                     >
                       <Trash2 className="size-4 text-muted-foreground" />
