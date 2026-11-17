@@ -12,12 +12,15 @@ import {
   YAxis,
 } from "recharts";
 import {
+  Ban,
   CheckCircle2,
   Clock,
+  PauseCircle,
   Plus,
   RefreshCw,
   Shield,
   Trash2,
+  Undo2,
   Users,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -715,14 +718,53 @@ export function TeamAccessPanel({
     }
   });
 
-  const handleToggleActive = async (id: string, active: boolean) => {
+  const handleAssignRole = async (
+    id: string,
+    nextRole: "ADMIN" | "DEV" | "EDITOR",
+    name: string
+  ) => {
     try {
       const updated = await studioFetch("/api/studio/team", "PATCH", role, {
         id,
-        active: !active,
+        role: nextRole,
       });
       onPayloadChange(updated);
-      toast.success("Status akses anggota diperbarui");
+      toast.success(`Peran ${name} diubah ke ${nextRole}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal mengubah peran");
+    }
+  };
+
+  const handleRollbackRole = async (id: string, name: string) => {
+    try {
+      const updated = await studioFetch("/api/studio/team", "PATCH", role, {
+        id,
+        rollbackRole: true,
+      });
+      onPayloadChange(updated);
+      toast.success(`Peran ${name} berhasil di-rollback`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal rollback peran");
+    }
+  };
+
+  const handleSetStatus = async (
+    id: string,
+    status: "ACTIVE" | "SUSPENDED" | "BLOCKED",
+    name: string
+  ) => {
+    try {
+      const updated = await studioFetch("/api/studio/team", "PATCH", role, {
+        id,
+        status,
+      });
+      onPayloadChange(updated);
+      const labelMap = {
+        ACTIVE: "diaktifkan kembali",
+        SUSPENDED: "disuspend sementara",
+        BLOCKED: "diblokir",
+      };
+      toast.success(`Akun ${name} ${labelMap[status]}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal mengubah status");
     }
@@ -869,10 +911,9 @@ export function TeamAccessPanel({
             <TableHeader>
               <TableRow>
                 <TableHead>Anggota</TableHead>
-                <TableHead>Jabatan</TableHead>
-                <TableHead>Peran</TableHead>
+                <TableHead>Peran &amp; Rollback</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Aksi</TableHead>
+                <TableHead className="text-right">Kontrol Akses</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -880,37 +921,115 @@ export function TeamAccessPanel({
                 <TableRow key={member.id}>
                   <TableCell>
                     <div className="font-medium text-foreground">{member.name}</div>
-                    <div className="text-xs text-muted-foreground">{member.email}</div>
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {member.title}
+                    <div className="text-xs text-muted-foreground">
+                      {member.email} · {member.title}
+                    </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={member.role === "ADMIN" ? "default" : "secondary"}>
-                      {member.role}
+                    <div className="flex items-center gap-1.5">
+                      <Select
+                        disabled={!canManageTeam}
+                        value={member.role}
+                        onValueChange={(v) =>
+                          handleAssignRole(
+                            member.id,
+                            v as "ADMIN" | "DEV" | "EDITOR",
+                            member.name
+                          )
+                        }
+                      >
+                        <SelectTrigger className="h-7 w-[104px] text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ADMIN">ADMIN</SelectItem>
+                          <SelectItem value="DEV">DEV</SelectItem>
+                          <SelectItem value="EDITOR">EDITOR</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {member.previousRole && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 gap-1 px-2 text-[11px]"
+                          disabled={!canManageTeam}
+                          title={`Rollback peran ke ${member.previousRole}`}
+                          onClick={() => handleRollbackRole(member.id, member.name)}
+                        >
+                          <Undo2 className="size-3" />
+                          {member.previousRole}
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        member.status === "ACTIVE"
+                          ? "secondary"
+                          : member.status === "SUSPENDED"
+                            ? "outline"
+                            : "destructive"
+                      }
+                    >
+                      {member.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>
-                    <button
-                      type="button"
-                      disabled={!canManageTeam}
-                      onClick={() => handleToggleActive(member.id, member.active)}
-                      className="cursor-pointer disabled:cursor-not-allowed"
-                    >
-                      <Badge variant={member.active ? "outline" : "secondary"}>
-                        {member.active ? "Aktif" : "Nonaktif"}
-                      </Badge>
-                    </button>
-                  </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      disabled={!canManageTeam}
-                      onClick={() => handleDeleteMember(member.id, member.name)}
-                    >
-                      <Trash2 className="size-4 text-muted-foreground" />
-                    </Button>
+                    <div className="inline-flex items-center gap-1">
+                      {member.status !== "ACTIVE" ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 gap-1 px-2 text-[11px]"
+                          disabled={!canManageTeam}
+                          onClick={() =>
+                            handleSetStatus(member.id, "ACTIVE", member.name)
+                          }
+                        >
+                          <CheckCircle2 className="size-3" />
+                          Unblock
+                        </Button>
+                      ) : (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 gap-1 px-2 text-[11px]"
+                            disabled={!canManageTeam}
+                            title="Suspend sementara"
+                            onClick={() =>
+                              handleSetStatus(member.id, "SUSPENDED", member.name)
+                            }
+                          >
+                            <PauseCircle className="size-3" />
+                            Suspend
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 gap-1 px-2 text-[11px] text-destructive hover:text-destructive"
+                            disabled={!canManageTeam}
+                            title="Blokir pengguna"
+                            onClick={() =>
+                              handleSetStatus(member.id, "BLOCKED", member.name)
+                            }
+                          >
+                            <Ban className="size-3" />
+                            Block
+                          </Button>
+                        </>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-7"
+                        disabled={!canManageTeam}
+                        onClick={() => handleDeleteMember(member.id, member.name)}
+                      >
+                        <Trash2 className="size-3.5 text-muted-foreground" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

@@ -213,6 +213,7 @@ export async function getStudioDashboardPayload(): Promise<StudioDashboardPayloa
     })),
     team: team.map((m) => ({
       ...m,
+      previousRole: m.previousRole ?? null,
       createdAt: m.createdAt.toISOString(),
     })),
     analytics: analytics.map((a) => ({
@@ -263,32 +264,130 @@ export async function deleteStudioOrder(id: string) {
   return getStudioDashboardPayload();
 }
 
-export async function createStudioMember(input: CreateTeamMemberInput) {
-  await db.studioMember.create({
+export async function createStudioMember(
+  input: CreateTeamMemberInput,
+  actorRole = "admin"
+) {
+  const created = await db.studioMember.create({
     data: {
       name: input.name,
       email: input.email,
       role: input.role,
+      status: input.active ? "ACTIVE" : "SUSPENDED",
       title: input.title,
       active: input.active,
     },
   });
-  return getStudioDashboardPayload();
-}
-
-export async function updateStudioMember(input: UpdateTeamMemberInput) {
-  await db.studioMember.update({
-    where: { id: input.id },
+  await db.auditLog.create({
     data: {
-      ...(input.role ? { role: input.role } : {}),
-      ...(typeof input.active === "boolean" ? { active: input.active } : {}),
+      actorRole,
+      action: "USER_CREATED",
+      target: created.email,
+      detail: `Pengguna baru "${created.name}" dibuat dengan peran ${created.role}.`,
     },
   });
   return getStudioDashboardPayload();
 }
 
-export async function deleteStudioMember(id: string) {
+export async function updateStudioMember(
+  input: UpdateTeamMemberInput,
+  actorRole = "admin"
+) {
+  const existing = await db.studioMember.findUnique({
+    where: { id: input.id },
+  });
+  if (!existing) {
+    throw new Error("Anggota tim tidak ditemukan");
+  }
+
+  if (input.rollbackRole) {
+    if (!existing.previousRole) {
+      throw new Error("Tidak ada peran sebelumnya untuk di-rollback");
+    }
+    const targetRole = existing.previousRole;
+    await db.studioMember.update({
+      where: { id: input.id },
+      data: {
+        role: targetRole,
+        previousRole: existing.role,
+      },
+    });
+    await db.auditLog.create({
+      data: {
+        actorRole,
+        action: "ROLE_ROLLED_BACK",
+        target: existing.email,
+        detail: `Peran ${existing.name} dikembalikan dari ${existing.role} ke ${targetRole}.`,
+      },
+    });
+    return getStudioDashboardPayload();
+  }
+
+  const nextStatus =
+    input.status ??
+    (typeof input.active === "boolean"
+      ? input.active
+        ? "ACTIVE"
+        : "SUSPENDED"
+      : existing.status);
+  const nextActive = nextStatus === "ACTIVE";
+  const roleChanged = Boolean(input.role && input.role !== existing.role);
+
+  await db.studioMember.update({
+    where: { id: input.id },
+    data: {
+      ...(roleChanged && input.role
+        ? { role: input.role, previousRole: existing.role }
+        : {}),
+      status: nextStatus,
+      active: nextActive,
+      ...(typeof input.statusReason === "string"
+        ? { statusReason: input.statusReason }
+        : {}),
+    },
+  });
+
+  if (roleChanged && input.role) {
+    await db.auditLog.create({
+      data: {
+        actorRole,
+        action: "ROLE_ASSIGNED",
+        target: existing.email,
+        detail: `Peran ${existing.name} diubah dari ${existing.role} ke ${input.role}.`,
+      },
+    });
+  } else if (nextStatus !== existing.status) {
+    await db.auditLog.create({
+      data: {
+        actorRole,
+        action:
+          nextStatus === "BLOCKED"
+            ? "USER_BLOCKED"
+            : nextStatus === "SUSPENDED"
+              ? "USER_SUSPENDED"
+              : "USER_UNBLOCKED",
+        target: existing.email,
+        detail: `Status ${existing.name} diubah dari ${existing.status} ke ${nextStatus}.`,
+      },
+    });
+  }
+
+  return getStudioDashboardPayload();
+}
+
+export async function deleteStudioMember(id: string, actorRole = "admin") {
+  const existing = await db.studioMember.findUnique({ where: { id } });
   await db.studioMember.delete({ where: { id } });
+  if (existing) {
+    await db.auditLog.create({
+      data: {
+        actorRole,
+        action: "USER_DELETED",
+        target: existing.email,
+        detail: `Akun ${existing.name} dihapus dari daftar tim studio.`,
+      },
+    });
+  }
   return getStudioDashboardPayload();
 }
 

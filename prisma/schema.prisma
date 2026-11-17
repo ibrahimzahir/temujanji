@@ -166,6 +166,12 @@ enum StudioRoleEnum {
   EDITOR
 }
 
+enum MemberStatusEnum {
+  ACTIVE
+  SUSPENDED
+  BLOCKED
+}
+
 enum StudioRsvpStatus {
   DRAFT
   MENUNGGU_RSVP
@@ -173,16 +179,19 @@ enum StudioRsvpStatus {
 }
 
 model StudioMember {
-  id        String         @id @default(cuid())
-  name      String
-  email     String         @unique
-  role      StudioRoleEnum @default(EDITOR)
-  title     String
-  active    Boolean        @default(true)
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+  id           String           @id @default(cuid())
+  name         String
+  email        String           @unique
+  role         StudioRoleEnum   @default(EDITOR)
+  previousRole StudioRoleEnum?
+  status       MemberStatusEnum @default(ACTIVE)
+  statusReason String           @default("")
+  title        String
+  active       Boolean          @default(true)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
-  @@index([role, active])
+  @@index([role, active, status])
 }
 
 model StudioOrderRecord {

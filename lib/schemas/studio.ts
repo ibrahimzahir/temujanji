@@ -48,6 +48,9 @@ export const deleteByIdSchema = z.object({
 });
 export type DeleteByIdInput = z.infer<typeof deleteByIdSchema>;
 
+export const memberStatusSchema = z.enum(["ACTIVE", "SUSPENDED", "BLOCKED"]);
+export type MemberStatusType = z.infer<typeof memberStatusSchema>;
+
 export const createTeamMemberSchema = z.object({
   name: z.string().trim().min(2, "Nama anggota minimal 2 karakter").max(80),
   email: z.string().trim().email("Format email tidak valid"),
@@ -60,6 +63,9 @@ export type CreateTeamMemberInput = z.infer<typeof createTeamMemberSchema>;
 export const updateTeamMemberSchema = z.object({
   id: z.string().min(1),
   role: z.enum(["ADMIN", "DEV", "EDITOR"]).optional(),
+  status: memberStatusSchema.optional(),
+  statusReason: z.string().trim().max(200).optional(),
+  rollbackRole: z.boolean().optional(),
   active: z.boolean().optional(),
 });
 export type UpdateTeamMemberInput = z.infer<typeof updateTeamMemberSchema>;
@@ -100,6 +106,9 @@ export const studioMemberRecordSchema = z.object({
   name: z.string(),
   email: z.string(),
   role: z.enum(["ADMIN", "DEV", "EDITOR"]),
+  previousRole: z.enum(["ADMIN", "DEV", "EDITOR"]).nullable(),
+  status: memberStatusSchema,
+  statusReason: z.string(),
   title: z.string(),
   active: z.boolean(),
   createdAt: z.string(),
