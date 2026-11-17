@@ -1,12 +1,14 @@
 import { db } from "@/lib/db";
-import type {
-  CreateAnalyticsInput,
-  CreateOrderInput,
-  CreateTeamMemberInput,
-  CreateTrafficHitInput,
-  StudioDashboardPayload,
-  UpdateOrderInput,
-  UpdateTeamMemberInput,
+import {
+  DEFAULT_ROLE_PERMISSIONS,
+  userPermissionsSchema,
+  type CreateAnalyticsInput,
+  type CreateOrderInput,
+  type CreateTeamMemberInput,
+  type CreateTrafficHitInput,
+  type StudioDashboardPayload,
+  type UpdateOrderInput,
+  type UpdateTeamMemberInput,
 } from "@/lib/schemas/studio";
 
 const DUMMY_TEAM = [
@@ -303,11 +305,17 @@ export async function getStudioDashboardPayload(): Promise<StudioDashboardPayloa
       ...o,
       createdAt: o.createdAt.toISOString(),
     })),
-    team: team.map((m) => ({
-      ...m,
-      previousRole: m.previousRole ?? null,
-      createdAt: m.createdAt.toISOString(),
-    })),
+    team: team.map((m) => {
+      const parsedPerm = userPermissionsSchema.safeParse(m.permissions);
+      return {
+        ...m,
+        previousRole: m.previousRole ?? null,
+        permissions: parsedPerm.success
+          ? parsedPerm.data
+          : DEFAULT_ROLE_PERMISSIONS[m.role],
+        createdAt: m.createdAt.toISOString(),
+      };
+    }),
     analytics: analytics.map((a) => ({
       id: a.id,
       date: a.date,
@@ -448,10 +456,20 @@ export async function updateStudioMember(
       ...(typeof input.statusReason === "string"
         ? { statusReason: input.statusReason }
         : {}),
+      ...(input.permissions ? { permissions: input.permissions } : {}),
     },
   });
 
-  if (roleChanged && input.role) {
+  if (input.permissions) {
+    await db.auditLog.create({
+      data: {
+        actorRole,
+        action: "PERMISSIONS_UPDATED",
+        target: existing.email,
+        detail: `Izin mikro ${existing.name} diperbarui: ${input.permissions.pages.length} halaman, ${input.permissions.operations.length} operasi.`,
+      },
+    });
+  } else if (roleChanged && input.role) {
     await db.auditLog.create({
       data: {
         actorRole,

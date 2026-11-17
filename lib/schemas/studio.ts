@@ -51,6 +51,87 @@ export type DeleteByIdInput = z.infer<typeof deleteByIdSchema>;
 export const memberStatusSchema = z.enum(["ACTIVE", "SUSPENDED", "BLOCKED"]);
 export type MemberStatusType = z.infer<typeof memberStatusSchema>;
 
+export const pagePermissionSchema = z.enum([
+  "ringkasan",
+  "koleksi",
+  "pesanan",
+  "analitik",
+  "tim",
+  "dev",
+]);
+export type PagePermissionKey = z.infer<typeof pagePermissionSchema>;
+
+export const operationPermissionSchema = z.enum([
+  "cards.create",
+  "cards.update",
+  "cards.delete",
+  "content.update",
+  "orders.create",
+  "orders.update",
+  "orders.delete",
+  "analytics.write",
+  "users.manage",
+  "users.grant_permissions",
+  "infra.manage",
+]);
+export type OperationPermissionKey = z.infer<typeof operationPermissionSchema>;
+
+export const userPermissionsSchema = z.object({
+  pages: z.array(pagePermissionSchema),
+  operations: z.array(operationPermissionSchema),
+});
+export type UserPermissions = z.infer<typeof userPermissionsSchema>;
+
+export const DEFAULT_ROLE_PERMISSIONS: Record<
+  "ADMIN" | "DEV" | "EDITOR",
+  UserPermissions
+> = {
+  ADMIN: {
+    pages: ["ringkasan", "koleksi", "pesanan", "analitik", "tim"],
+    operations: [
+      "cards.create",
+      "cards.update",
+      "cards.delete",
+      "content.update",
+      "orders.create",
+      "orders.update",
+      "orders.delete",
+      "analytics.write",
+      "users.manage",
+      "users.grant_permissions",
+    ],
+  },
+  DEV: {
+    pages: ["ringkasan", "koleksi", "pesanan", "analitik", "tim", "dev"],
+    operations: [
+      "cards.create",
+      "cards.update",
+      "cards.delete",
+      "content.update",
+      "orders.create",
+      "orders.update",
+      "orders.delete",
+      "analytics.write",
+      "users.manage",
+      "users.grant_permissions",
+      "infra.manage",
+    ],
+  },
+  EDITOR: {
+    pages: ["ringkasan", "koleksi", "pesanan", "analitik"],
+    operations: [
+      "cards.create",
+      "cards.update",
+      "cards.delete",
+      "content.update",
+      "orders.create",
+      "orders.update",
+      "orders.delete",
+      "analytics.write",
+    ],
+  },
+};
+
 export const createTeamMemberSchema = z.object({
   name: z.string().trim().min(2, "Nama anggota minimal 2 karakter").max(80),
   email: z.string().trim().email("Format email tidak valid"),
@@ -66,6 +147,7 @@ export const updateTeamMemberSchema = z.object({
   status: memberStatusSchema.optional(),
   statusReason: z.string().trim().max(200).optional(),
   rollbackRole: z.boolean().optional(),
+  permissions: userPermissionsSchema.optional(),
   active: z.boolean().optional(),
 });
 export type UpdateTeamMemberInput = z.infer<typeof updateTeamMemberSchema>;
@@ -140,6 +222,7 @@ export const studioMemberRecordSchema = z.object({
   previousRole: z.enum(["ADMIN", "DEV", "EDITOR"]).nullable(),
   status: memberStatusSchema,
   statusReason: z.string(),
+  permissions: userPermissionsSchema,
   title: z.string(),
   active: z.boolean(),
   createdAt: z.string(),

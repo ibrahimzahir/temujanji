@@ -186,6 +186,7 @@ model StudioMember {
   previousRole StudioRoleEnum?
   status       MemberStatusEnum @default(ACTIVE)
   statusReason String           @default("")
+  permissions  Json?
   title        String
   active       Boolean          @default(true)
   createdAt    DateTime         @default(now())

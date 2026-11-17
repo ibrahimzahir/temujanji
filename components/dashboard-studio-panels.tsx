@@ -64,13 +64,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   createAnalyticsSchema,
   createOrderSchema,
   createTeamMemberSchema,
   createTrafficHitSchema,
+  DEFAULT_ROLE_PERMISSIONS,
+  type OperationPermissionKey,
+  type PagePermissionKey,
   type StudioDashboardPayload,
   type StudioRoleType,
+  type UserPermissions,
 } from "@/lib/schemas/studio";
 
 interface PanelProps {
@@ -952,12 +957,88 @@ export function AnalyticsPanel({
   );
 }
 
+const PAGE_PERMISSION_LABELS: Array<{ key: PagePermissionKey; label: string }> = [
+  { key: "ringkasan", label: "Ringkasan Studio" },
+  { key: "koleksi", label: "Koleksi & Konten" },
+  { key: "pesanan", label: "Pesanan & RSVP" },
+  { key: "analitik", label: "Analitik & Trafik" },
+  { key: "tim", label: "Tim & Hak Akses" },
+  { key: "dev", label: "Developer & Infra" },
+];
+
+const OPERATION_PERMISSION_LABELS: Array<{
+  key: OperationPermissionKey;
+  label: string;
+}> = [
+  { key: "cards.create", label: "Kartu: Buat" },
+  { key: "cards.update", label: "Kartu: Ubah" },
+  { key: "cards.delete", label: "Kartu: Hapus" },
+  { key: "content.update", label: "Konten Website: Ubah" },
+  { key: "orders.create", label: "Pesanan: Buat" },
+  { key: "orders.update", label: "Pesanan: Ubah" },
+  { key: "orders.delete", label: "Pesanan: Hapus" },
+  { key: "analytics.write", label: "Analitik: Catat" },
+  { key: "users.manage", label: "Pengguna: Kelola" },
+  { key: "users.grant_permissions", label: "Izin Mikro: Beri Akses" },
+  { key: "infra.manage", label: "Infra & Backup: Kelola" },
+];
+
 export function TeamAccessPanel({
   role,
   payload,
   onPayloadChange,
 }: PanelProps) {
   const canManageTeam = role === "admin" || role === "dev";
+  const [selectedMemberId, setSelectedMemberId] = React.useState<string>(
+    payload.team[0]?.id ?? ""
+  );
+  const selectedMember =
+    payload.team.find((m) => m.id === selectedMemberId) ?? payload.team[0];
+  const [draftPerms, setDraftPerms] = React.useState<UserPermissions>(
+    selectedMember?.permissions ?? DEFAULT_ROLE_PERMISSIONS.EDITOR
+  );
+  const [savingPerms, setSavingPerms] = React.useState(false);
+
+  React.useEffect(() => {
+    if (selectedMember) {
+      setDraftPerms(selectedMember.permissions);
+    }
+  }, [selectedMember?.id, selectedMember?.permissions]);
+
+  const togglePagePerm = (key: PagePermissionKey) => {
+    setDraftPerms((prev) => ({
+      ...prev,
+      pages: prev.pages.includes(key)
+        ? prev.pages.filter((p) => p !== key)
+        : [...prev.pages, key],
+    }));
+  };
+
+  const toggleOpPerm = (key: OperationPermissionKey) => {
+    setDraftPerms((prev) => ({
+      ...prev,
+      operations: prev.operations.includes(key)
+        ? prev.operations.filter((o) => o !== key)
+        : [...prev.operations, key],
+    }));
+  };
+
+  const handleSavePermissions = async () => {
+    if (!selectedMember) return;
+    setSavingPerms(true);
+    try {
+      const updated = await studioFetch("/api/studio/team", "PATCH", role, {
+        id: selectedMember.id,
+        permissions: draftPerms,
+      });
+      onPayloadChange(updated);
+      toast.success(`Izin halaman & operasi mikro untuk ${selectedMember.name} disimpan`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menyimpan izin");
+    } finally {
+      setSavingPerms(false);
+    }
+  };
   const form = useZodForm({
     schema: createTeamMemberSchema,
     defaultValues: {
@@ -1299,6 +1380,100 @@ export function TeamAccessPanel({
           </Table>
         </CardContent>
       </Card>
+
+      {selectedMember && (
+        <Card className="border-border/80 lg:col-span-12">
+          <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 font-sans text-base font-semibold">
+                <Shield className="size-4 text-primary" />
+                Matriks Izin Halaman &amp; Operasi Mikro per Pengguna
+              </CardTitle>
+              <CardDescription>
+                Admin dapat memberikan akses halaman dan operasi spesifik untuk{" "}
+                <strong>{selectedMember.name}</strong> ({selectedMember.role}).
+              </CardDescription>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Select
+                value={selectedMember.id}
+                onValueChange={(v) => setSelectedMemberId(v)}
+              >
+                <SelectTrigger className="h-8 w-[210px] text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {payload.team.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.name} ({m.role})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!canManageTeam}
+                onClick={() =>
+                  setDraftPerms(DEFAULT_ROLE_PERMISSIONS[selectedMember.role])
+                }
+              >
+                Reset Default {selectedMember.role}
+              </Button>
+              <Button
+                size="sm"
+                disabled={!canManageTeam || savingPerms}
+                onClick={handleSavePermissions}
+              >
+                {savingPerms ? "Menyimpan..." : "Simpan Izin Pengguna"}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className="space-y-2.5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Akses Tingkat Halaman (Page-Level)
+              </p>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {PAGE_PERMISSION_LABELS.map((item) => (
+                  <label
+                    key={item.key}
+                    className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-border/80 px-3 py-2 text-xs"
+                  >
+                    <Checkbox
+                      disabled={!canManageTeam}
+                      checked={draftPerms.pages.includes(item.key)}
+                      onCheckedChange={() => togglePagePerm(item.key)}
+                    />
+                    <span>{item.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2.5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Akses Operasi Mikro (Micro-Level Operations)
+              </p>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {OPERATION_PERMISSION_LABELS.map((op) => (
+                  <label
+                    key={op.key}
+                    className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-border/80 px-3 py-2 text-xs"
+                  >
+                    <Checkbox
+                      disabled={!canManageTeam}
+                      checked={draftPerms.operations.includes(op.key)}
+                      onCheckedChange={() => toggleOpPerm(op.key)}
+                    />
+                    <span>{op.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
