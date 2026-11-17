@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1000 1000" width="1000" height="1000">
+  <defs>
+    <filter id="gold-bloom" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="18" result="blur" />
+      <feColorMatrix type="matrix" values="1 0 0 0 0.85  0 1 0 0 0.68  0 0 1 0 0.35  0 0 0 0.6 0" />
+      <feMerge>
+        <feMergeNode />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+    <filter id="drop-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#1A1412" flood-opacity="0.15" />
+    </filter>
+    <linearGradient id="gold-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D4AF37" />
+      <stop offset="50%" stop-color="#F3E5AB" />
+      <stop offset="100%" stop-color="#AA771C" />
+    </linearGradient>
+    <radialGradient id="halo-glow" cx="50%" cy="45%" r="45%">
+      <stop offset="0%" stop-color="#FBF6EB" stop-opacity="0.9" />
+      <stop offset="40%" stop-color="#EED9A4" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Ambient Sacred Halo Background -->
+  <circle id="ambient-halo" cx="500" cy="480" r="380" fill="url(#halo-glow)" />
+
+  <!-- 1. GROOM VECTOR & ARTWORK GROUP (Left) -->
+  <g id="groom-group" class="groom-figure">
+    <!-- Contact shadow beneath shoes -->
+    <ellipse cx="365" cy="926" rx="75" ry="14" fill="rgba(26, 20, 18, 0.22)" filter="url(#drop-shadow)" />
+    <!-- Groom Silhouette Base -->
+    <path d="M 302.0,919.5 L 278.0,916.5 L 273.5,913.0 L 273.5,904.0 L 275.5,903.0 L 273.5,899.0 L 279.5,887.0 L 289.5,878.0 L 290.5,872.0 L 297.5,861.0 L 300.5,849.0 L 298.5,846.0 L 301.5,845.0 L 303.5,836.0 L 303.5,823.0 L 309.5,791.0 L 309.5,671.0 L 311.5,669.0 L 312.5,655.0 L 313.5,599.0 L 317.5,576.0 L 316.5,516.0 L 318.5,516.0 L 318.5,511.0 L 317.5,493.0 L 309.5,481.0 L 300.0,478.5 L 290.5,472.0 L 290.5,468.0 L 295.5,462.0 L 292.5,446.0 L 288.5,443.0 L 290.5,442.0 L 288.5,440.0 L 288.5,433.0 L 271.5,398.0 L 262.5,365.0 L 260.5,343.0 L 270.5,272.0 L 269.5,267.0 L 277.5,235.0 L 279.5,234.0 L 291.5,194.0 L 305.0,182.5 L 328.0,177.5 L 356.0,166.5 L 368.0,159.5 L 375.0,151.5 L 383.0,148.5 L 390.5,136.0 L 393.5,103.0 L 391.5,96.0 L 393.0,94.5 L 394.5,98.0 L 395.5,90.0 L 399.5,85.0 L 397.5,84.0 L 401.0,83.5 L 417.0,67.5 L 421.0,67.5 L 421.0,69.5 L 423.0,67.5 L 437.0,66.5 L 450.0,72.5 L 455.0,72.5 L 455.0,75.5 L 457.0,74.5 L 458.0,77.5 L 466.0,81.5 L 470.0,86.5 L 479.5,89.0 L 479.5,117.0 L 476.5,138.0 L 473.5,144.0 L 472.5,161.0 L 458.5,169.0 L 454.5,180.0 L 473.5,194.0 L 471.5,324.0 L 465.5,399.0 L 442.5,519.0 L 421.5,600.0 L 407.5,706.0 L 399.5,750.0 L 395.5,799.0 L 385.5,849.0 L 368.0,890.5 L 365.0,888.5 L 355.0,889.5 L 342.5,898.0 L 347.0,898.5 L 348.0,901.5 L 336.0,906.5 L 330.0,906.5 L 311.0,918.5 L 302.0,919.5 Z" fill="none" stroke="url(#gold-gradient)" stroke-width="1.5" opacity="0.4" />
+    <!-- High-Fidelity Groom Artwork -->
+    <image href="/images/islamic-groom-front.png" x="0" y="0" width="1000" height="1000" preserveAspectRatio="xMidYMid meet" />
+  </g>
+
+  <!-- 2. BRIDE VECTOR & ARTWORK GROUP (Right) -->
+  <g id="bride-group" class="bride-figure">
+    <!-- Contact shadow beneath dress -->
+    <ellipse cx="635" cy="940" rx="210" ry="18" fill="rgba(26, 20, 18, 0.20)" filter="url(#drop-shadow)" />
+    <!-- Bride Silhouette Base -->
+    <path d="M 617.0,937.5 L 573.0,927.5 L 552.0,927.5 L 544.0,928.5 L 542.0,931.5 L 539.0,929.5 L 525.0,933.5 L 501.0,934.5 L 488.0,931.5 L 483.0,933.5 L 478.0,929.5 L 476.0,931.5 L 475.0,929.5 L 459.0,927.5 L 458.0,925.5 L 457.0,928.5 L 430.0,923.5 L 423.0,925.5 L 422.0,923.5 L 421.0,926.5 L 409.0,926.5 L 409.0,924.5 L 393.0,913.5 L 375.0,907.5 L 369.5,892.0 L 385.5,850.0 L 395.5,800.0 L 399.5,751.0 L 408.5,700.0 L 421.5,601.0 L 442.5,520.0 L 465.5,400.0 L 472.5,300.0 L 473.5,196.0 L 479.5,195.0 L 477.5,191.0 L 480.5,180.0 L 478.5,174.0 L 480.0,169.5 L 483.5,172.0 L 481.5,170.0 L 484.5,162.0 L 481.5,158.0 L 487.5,151.0 L 488.5,145.0 L 502.0,132.5 L 505.0,134.5 L 512.0,131.5 L 536.0,131.5 L 545.0,134.5 L 561.0,147.5 L 569.0,148.5 L 585.5,167.0 L 593.5,181.0 L 613.5,256.0 L 615.5,269.0 L 615.5,275.0 L 613.5,276.0 L 614.5,288.0 L 642.5,359.0 L 653.5,404.0 L 666.5,434.0 L 675.5,468.0 L 678.5,471.0 L 676.5,472.0 L 685.5,508.0 L 683.5,512.0 L 685.5,521.0 L 723.5,609.0 L 725.5,627.0 L 736.5,653.0 L 769.5,719.0 L 793.5,754.0 L 811.0,771.5 L 819.0,775.5 L 826.0,784.5 L 828.0,783.5 L 828.0,785.5 L 851.0,801.5 L 870.0,808.5 L 889.0,819.5 L 886.0,820.5 L 861.5,809.0 L 880.0,828.5 L 881.0,825.5 L 883.0,830.5 L 893.0,832.5 L 893.0,835.5 L 895.0,836.5 L 896.0,834.5 L 908.0,841.5 L 920.0,841.5 L 937.5,861.0 L 935.5,875.0 L 933.5,875.0 L 915.5,899.0 L 904.0,908.5 L 899.0,909.5 L 899.0,911.5 L 873.0,906.5 L 869.0,909.5 L 868.0,907.5 L 855.0,908.5 L 819.0,915.5 L 815.5,915.0 L 818.0,913.5 L 804.0,913.5 L 813.5,915.0 L 800.0,915.5 L 800.0,913.5 L 795.5,916.0 L 797.0,917.5 L 793.0,916.5 L 788.0,919.5 L 784.0,917.5 L 777.0,918.5 L 776.0,916.5 L 766.0,916.5 L 753.0,920.5 L 731.0,917.5 L 731.0,919.5 L 710.0,922.5 L 704.0,927.5 L 688.0,928.5 L 690.5,934.0 L 689.0,936.5 L 682.0,936.5 L 682.0,934.5 L 663.0,935.5 L 647.0,927.5 L 639.0,927.5 L 632.0,923.5 L 629.0,929.5 L 620.0,928.5 L 620.5,933.0 L 617.0,937.5 Z" fill="none" stroke="url(#gold-gradient)" stroke-width="1.5" opacity="0.4" />
+    <!-- High-Fidelity Bride Artwork -->
+    <image href="/images/islamic-bride-front.png" x="0" y="0" width="1000" height="1000" preserveAspectRatio="xMidYMid meet" />
+  </g>
+
+  <!-- 3. UNITED SEAMLESS EMBRACE (Final locked position overlay) -->
+  <g id="united-embrace-group" class="united-figure" opacity="0">
+    <image href="/images/islamic-couple-front-united.png" x="0" y="0" width="1000" height="1000" preserveAspectRatio="xMidYMid meet" />
+  </g>
+</svg>

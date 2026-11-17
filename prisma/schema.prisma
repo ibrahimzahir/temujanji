@@ -1,0 +1,220 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime
+  updatedAt     DateTime
+  studio        Boolean   @default(false)
+  sessions      Session[]
+  accounts      Account[]
+  orders        Order[]
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime
+  updatedAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Account {
+  id                     String    @id
+  accountId              String
+  providerId             String
+  userId                 String
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken            String?
+  refreshToken           String?
+  idToken                String?
+  accessTokenExpiresAt   DateTime?
+  refreshTokenExpiresAt  DateTime?
+  scope                  String?
+  password               String?
+  createdAt              DateTime
+  updatedAt              DateTime
+
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime
+  updatedAt  DateTime
+
+  @@index([identifier])
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+}
+
+enum Attendance {
+  HADIR
+  TIDAK_HADIR
+}
+
+model Order {
+  id          String        @id @default(cuid())
+  checkoutKey String        @unique
+  ownerId     String
+  owner       User          @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  design      String
+  packageId   String
+  amount      Int
+  payment     PaymentStatus @default(PENDING)
+  eventName   String
+  eventDate   String
+  venue       String
+  notes       String
+  createdAt   DateTime      @default(now())
+  invitation  Invitation?
+
+  @@index([ownerId, createdAt])
+}
+
+model Invitation {
+  id          String   @id @default(cuid())
+  orderId     String   @unique
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  guests      Guest[]
+}
+
+model Guest {
+  id           String     @id @default(cuid())
+  tokenHash    String     @unique
+  invitationId String
+  invitation   Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  name         String
+  attendance   Attendance?
+  wish         String     @default("")
+  respondedAt  DateTime?
+
+  @@index([invitationId])
+}
+
+model RateLimit {
+  id          String @id
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+}
+
+model CollectionSectionConfig {
+  id                String   @id @default("default")
+  eyebrow           String
+  titleLine1        String
+  titleHighlight    String
+  description       String
+  searchPlaceholder String
+  updatedAt         DateTime @updatedAt
+}
+
+model DesignTemplate {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  category    String
+  image       String
+  color       String
+  layout      String
+  sample      String
+  description String
+  tag         String
+  accent      String
+  venue       String
+  date        String
+  quote       String
+  published   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  updatedAt   DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+model SiteSectionsConfig {
+  id        String   @id @default("default")
+  data      Json
+  updatedAt DateTime @updatedAt
+}
+
+enum StudioRoleEnum {
+  ADMIN
+  DEV
+  EDITOR
+}
+
+enum StudioRsvpStatus {
+  DRAFT
+  MENUNGGU_RSVP
+  SIAP_TERBIT
+}
+
+model StudioMember {
+  id        String         @id @default(cuid())
+  name      String
+  email     String         @unique
+  role      StudioRoleEnum @default(EDITOR)
+  title     String
+  active    Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([role, active])
+}
+
+model StudioOrderRecord {
+  id              String           @id @default(cuid())
+  coupleName      String
+  email           String
+  whatsapp        String
+  designSlug      String
+  packageName     String
+  amount          Int
+  paymentStatus   PaymentStatus    @default(PENDING)
+  rsvpStatus      StudioRsvpStatus @default(DRAFT)
+  eventDate       String
+  venue           String
+  guestCount      Int              @default(100)
+  confirmedGuests Int              @default(0)
+  notes           String           @default("")
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([paymentStatus, createdAt])
+}
+
+model AnalyticsDaily {
+  id            String   @id @default(cuid())
+  date          String   @unique
+  desktopViews  Int      @default(0)
+  mobileViews   Int      @default(0)
+  rsvpSubmitted Int      @default(0)
+  inquiries     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([date])
+}
