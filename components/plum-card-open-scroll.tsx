@@ -18,30 +18,20 @@ export function PlumCardOpenScroll() {
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
-    offset: ["start start", "end end"]
-  });
-
-  const { scrollYProgress: entryProgress } = useScroll({
-    target: containerRef,
-    offset: ["start end", "start start"]
+    offset: ["start 0.8", "end 0.9"]
   });
 
   const smoothProgress = useSpring(scrollYProgress, SPRING_CONFIG);
-  const smoothEntry = useSpring(entryProgress, SPRING_CONFIG);
-  const entryY = useTransform(smoothEntry, [0, 1], [36, 0]);
-  const entryOpacity = useTransform(smoothEntry, [0, 0.7], [0.45, 1]);
 
   // --------------------------------------------------------------------------
-  // 3D CARD OPENING + MULTI-DEPTH FLOWERS PARALLAX
-  // 0.00 -> 0.15: Closed floral diamond card in gentle 3D perspective
-  // 0.15 -> 0.78: Cover swings open (-160deg) around left spine; spread centers;
-  //               3D foreground & background flowers bloom outward in parallax
-  // 0.78 -> 1.00: Fully open luxury spread with surrounding 3D botanicals
+  // 3D CARD OPENING + NATURAL MULTI-DEPTH PARALLAX
   // --------------------------------------------------------------------------
-  const coverRotateY = useTransform(smoothProgress, [0.15, 0.78], [0, -160]);
-  const cardTiltX = useTransform(smoothProgress, [0, 0.45, 0.8], [11, 4, 0]);
-  const cardScale = useTransform(smoothProgress, [0, 0.78], [0.92, 1]);
-  const spreadCenterX = useTransform(smoothProgress, [0.15, 0.78], [0, 160]);
+  const headerY = useTransform(smoothProgress, [0, 0.45, 1], [20, 0, -10]);
+  const bookY = useTransform(smoothProgress, [0, 0.5, 1], [28, 0, -14]);
+  const coverRotateY = useTransform(smoothProgress, [0.18, 0.82], [0, -160]);
+  const cardTiltX = useTransform(smoothProgress, [0, 0.5, 0.85], [10, 4, 0]);
+  const cardScale = useTransform(smoothProgress, [0, 0.82], [0.94, 1]);
+  const spreadCenterX = useTransform(smoothProgress, [0.18, 0.82], [0, 160]);
 
   // Wax seal fades away as cover lifts
   const sealOpacity = useTransform(smoothProgress, [0.1, 0.22], [1, 0]);
@@ -55,12 +45,12 @@ export function PlumCardOpenScroll() {
   const ctaY = useTransform(smoothProgress, [0.58, 0.78], [16, 0]);
 
   return (
-    <section className="plum-card-runway plum-card-overlap" ref={containerRef} id="pengalaman-tamu">
-      <motion.div className="plum-card-sticky" style={{ y: entryY, opacity: entryOpacity }}>
+    <section className="plum-card-runway" ref={containerRef} id="pengalaman-tamu">
+      <div className="plum-card-sticky">
         <div className="plum-card-bg-glow" aria-hidden />
 
         {/* Section Editorial Header */}
-        <div className="shell plum-card-header">
+        <motion.div className="shell plum-card-header" style={{ y: headerY }}>
           <p className="eyebrow" style={{ justifyContent: "center" }}>
             <span /> PENGALAMAN TAMU · BUKA KARTU 3D
           </p>
@@ -70,7 +60,7 @@ export function PlumCardOpenScroll() {
           <motion.p className="plum-scroll-cue" style={{ opacity: promptOpacity }}>
             ↓ Gulir perlahan untuk membuka kartu dan melihat bunga bermekaran
           </motion.p>
-        </div>
+        </motion.div>
 
         {/* LAYER 2: 3D PERSPECTIVE BI-FOLD CARD STAGE */}
         <div className="plum-card-stage">
@@ -79,6 +69,7 @@ export function PlumCardOpenScroll() {
             className="plum-card-book"
             style={{
               x: spreadCenterX,
+              y: bookY,
               rotateX: cardTiltX,
               scale: cardScale
             }}
@@ -157,7 +148,7 @@ export function PlumCardOpenScroll() {
             </Link>
           </Button>
         </motion.div>
-      </motion.div>
+      </div>
     </section>
   );
 }

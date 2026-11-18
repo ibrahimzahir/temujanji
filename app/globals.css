@@ -4999,14 +4999,6 @@ footer {
   overflow: clip;
 }
 
-.plum-card-overlap {
-  z-index: 2;
-  margin-top: -24px;
-  border-top-left-radius: 28px;
-  border-top-right-radius: 28px;
-  box-shadow: 0 -20px 56px rgba(91, 35, 107, 0.08);
-}
-
 .plum-card-sticky {
   position: sticky;
   top: 0;
