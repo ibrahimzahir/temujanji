@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion, useScroll, useTransform, useSpring } from "motion/react";
 
 const SPRING_CONFIG = {
-  stiffness: 130,
+  stiffness: 120,
   damping: 26,
   mass: 0.4,
   restDelta: 0.001
@@ -21,27 +21,10 @@ export function PurpleFlatlayScroll() {
 
   const smoothProgress = useSpring(scrollYProgress, SPRING_CONFIG);
 
-  // --------------------------------------------------------------------------
-  // NATURAL MULTI-PLANE PARALLAX: FLOWERS PARTING FROM THE PURPLE CARD
-  // Begins smoothly as section enters viewport; each depth layer moves at its own pace.
-  // --------------------------------------------------------------------------
   const headerY = useTransform(smoothProgress, [0, 1], [16, -12]);
-  const cardScale = useTransform(smoothProgress, [0, 0.5, 1], [0.96, 1.01, 1.04]);
-  const cardRotate = useTransform(smoothProgress, [0, 1], [-1.8, 1.2]);
-  const cardY = useTransform(smoothProgress, [0, 1], [24, -18]);
-
-  // Right peony glides smoothly outward & upward
-  const rightFlowerX = useTransform(smoothProgress, [0, 1], [0, 155]);
-  const rightFlowerY = useTransform(smoothProgress, [0, 1], [22, -46]);
-  const rightFlowerRotate = useTransform(smoothProgress, [0, 1], [-2, 14]);
-  const rightFlowerOpacity = useTransform(smoothProgress, [0, 0.85, 1], [0.96, 1, 0.88]);
-
-  // Left roses & petals glide smoothly outward & downward
-  const leftFlowerX = useTransform(smoothProgress, [0, 1], [0, -145]);
-  const leftFlowerY = useTransform(smoothProgress, [0, 1], [-8, 42]);
-  const leftFlowerRotate = useTransform(smoothProgress, [0, 1], [2, -15]);
-  const leftFlowerOpacity = useTransform(smoothProgress, [0, 0.85, 1], [0.96, 1, 0.88]);
-
+  const suiteScale = useTransform(smoothProgress, [0, 0.5, 1], [0.94, 1, 1.03]);
+  const suiteY = useTransform(smoothProgress, [0, 1], [28, -18]);
+  const suiteRotateX = useTransform(smoothProgress, [0, 0.6, 1], [6, 1, 0]);
   const cueOpacity = useTransform(smoothProgress, [0, 0.35], [1, 0]);
 
   return (
@@ -54,78 +37,41 @@ export function PurpleFlatlayScroll() {
             <span /> KOLEKSI AMPLOP &amp; KARTU UNGU
           </p>
           <h2>
-            Bunga menyingkir lembut, <em>mengungkap kartu undangan ungu.</em>
+            Sentuhan cat air lavender, <em>harmoni alami dalam setiap detail.</em>
           </h2>
           <motion.p className="purple-flatlay-cue" style={{ opacity: cueOpacity }}>
-            ↓ Gulir perlahan untuk melihat kelopak bunga bergerak menjauh dari kartu
+            ↓ Gulir perlahan untuk menikmati kedalaman suite undangan lavender
           </motion.p>
         </motion.div>
 
-        <div className="purple-flatlay-stage">
-          {/* LEFT SMALL ROSES & PETALS (Move Left & Away on Scroll) */}
+        <div
+          className="shell"
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            perspective: 1200,
+            marginTop: 12
+          }}
+        >
           <motion.div
-            className="flatlay-flower-left"
             style={{
-              x: leftFlowerX,
-              y: leftFlowerY,
-              rotate: leftFlowerRotate,
-              opacity: leftFlowerOpacity
+              scale: suiteScale,
+              y: suiteY,
+              rotateX: suiteRotateX,
+              width: "min(540px, 92vw)",
+              borderRadius: 20,
+              overflow: "hidden",
+              boxShadow: "0 24px 60px rgba(91, 35, 107, 0.14)",
+              border: "1px solid rgba(91, 35, 107, 0.12)",
+              background: "#f3ecf2"
             }}
-            aria-hidden
           >
             <Image
-              src="/images/flatlay-flower-left.png"
-              alt=""
-              width={285}
-              height={402}
-              priority
-              style={{ width: "100%", height: "auto", display: "block" }}
-            />
-          </motion.div>
-
-          {/* CENTER CRISP ROYAL PLUM ENVELOPE & LAVENDER CARD */}
-          <motion.div
-            className="flatlay-stationery-compose"
-            style={{
-              scale: cardScale,
-              rotate: cardRotate,
-              y: cardY
-            }}
-          >
-            {/* Tilted Royal Plum Envelope */}
-            <div className="flatlay-plum-envelope" aria-hidden>
-              <div className="flatlay-envelope-flap" />
-            </div>
-
-            {/* Crisp Unbroken Lavender Card */}
-            <div className="flatlay-lavender-card">
-              <div className="flatlay-card-inner">
-                <span className="flatlay-card-kicker">THE WEDDING OF</span>
-                <h3 className="flatlay-card-title">
-                  DARA <span className="flatlay-card-amp">&amp;</span> RAFI
-                </h3>
-                <p className="flatlay-card-date">SABTU, 24 OKTOBER 2026</p>
-                <p className="flatlay-card-time">PLATARAN HUTAN KOTA · 10.00 WIB</p>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* RIGHT LARGE PEONY & LEAVES (Move Right & Away on Scroll) */}
-          <motion.div
-            className="flatlay-flower-right"
-            style={{
-              x: rightFlowerX,
-              y: rightFlowerY,
-              rotate: rightFlowerRotate,
-              opacity: rightFlowerOpacity
-            }}
-            aria-hidden
-          >
-            <Image
-              src="/images/flatlay-flower-right.png"
-              alt=""
-              width={429}
-              height={570}
+              src="/images/lavender-suite-flatlay.jpg"
+              alt="Suite undangan pernikahan lavender dengan amplop floral cat air, kartu Save The Date, RSVP, dan Thank You"
+              width={1000}
+              height={1000}
               priority
               style={{ width: "100%", height: "auto", display: "block" }}
             />
