@@ -55,6 +55,8 @@ export function LandingFooterWrapper() {
               {link.label}
             </Link>
           ))}
+          <Link href="/privasi">Privasi</Link>
+          <Link href="/syarat-ketentuan">Syarat &amp; Ketentuan</Link>
         </div>
       </div>
       <div className="shell footer-studio-quote">

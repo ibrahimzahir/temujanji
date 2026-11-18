@@ -1,0 +1,17 @@
+[Unit]
+Description=Temu Janji Next.js Studio Server
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/var/www/temujanji
+EnvironmentFile=/var/www/temujanji/.env
+ExecStart=/usr/bin/pnpm start --hostname 127.0.0.1 --port 3100
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
