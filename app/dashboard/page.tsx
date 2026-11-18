@@ -14,6 +14,7 @@ import {
   TeamAccessPanel,
 } from "@/components/dashboard-studio-panels";
 import { DevConsolePanel } from "@/components/dashboard-dev-panel";
+import { MarketingPinterestPanel } from "@/components/dashboard-marketing-panel";
 import { SectionCards } from "@/components/section-cards";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -51,6 +52,7 @@ type DashboardSectionKey =
   | "pesanan"
   | "analitik"
   | "tim"
+  | "marketing"
   | "dev";
 
 const SECTION_LABELS: Record<DashboardSectionKey, string> = {
@@ -59,6 +61,7 @@ const SECTION_LABELS: Record<DashboardSectionKey, string> = {
   pesanan: "Pesanan & RSVP",
   analitik: "Analitik Kunjungan",
   tim: "Tim & Hak Akses",
+  marketing: "Marketing & Pinterest",
   dev: "Developer & Infra",
 };
 
@@ -256,6 +259,10 @@ export default function DashboardPage() {
               payload={payload}
               onPayloadChange={setPayload}
             />
+          )}
+
+          {activeSection === "marketing" && (
+            <MarketingPinterestPanel role={role} />
           )}
 
           {activeSection === "dev" && <DevConsolePanel role={role} />}

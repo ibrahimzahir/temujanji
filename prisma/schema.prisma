@@ -295,3 +295,21 @@ model TrafficHit {
   @@unique([path, location, deviceType])
   @@index([hits])
 }
+
+model PinterestPin {
+  id             String    @id @default(cuid())
+  title          String
+  description    String
+  board          String
+  designSlug     String
+  imageUrl       String
+  destinationUrl String
+  keywords       String
+  status         String    @default("SCHEDULED")
+  scheduledAt    DateTime
+  publishedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([status, scheduledAt])
+}

@@ -84,6 +84,12 @@ const data = {
       icon: Users,
     },
     {
+      key: "marketing",
+      title: "Marketing & Pinterest",
+      url: "/dashboard?tab=marketing",
+      icon: Sparkles,
+    },
+    {
       key: "dev",
       title: "Developer & Infra",
       url: "/dashboard?tab=dev",

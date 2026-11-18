@@ -384,3 +384,49 @@ export const devConsolePayloadSchema = z.object({
 });
 export type DevConsolePayload = z.infer<typeof devConsolePayloadSchema>;
 
+export const pinterestPinStatusSchema = z.enum(["DRAFT", "SCHEDULED", "PUBLISHED"]);
+export type PinterestPinStatusType = z.infer<typeof pinterestPinStatusSchema>;
+
+export const createPinterestPinSchema = z.object({
+  title: z.string().trim().min(5, "Judul Pin minimal 5 karakter").max(100),
+  description: z.string().trim().min(10, "Deskripsi Pin minimal 10 karakter").max(500),
+  board: z.string().trim().min(3, "Nama board wajib diisi").max(80),
+  designSlug: z.string().trim().min(2),
+  imageUrl: z.string().trim().min(1),
+  destinationUrl: z.string().trim().url("URL tujuan tidak valid"),
+  keywords: z.string().trim().min(3).max(200),
+  scheduledAt: z.string().trim().min(10, "Jadwal tayang wajib diisi"),
+});
+export type CreatePinterestPinInput = z.infer<typeof createPinterestPinSchema>;
+
+export const generatePinterestPinSchema = z.object({
+  designSlug: z.string().trim().min(2),
+  board: z.string().trim().min(3).max(80),
+  angle: z.enum(["romantis", "adat", "minimalis", "promo-shopee"]),
+  scheduledAt: z.string().trim().min(10),
+});
+export type GeneratePinterestPinInput = z.infer<typeof generatePinterestPinSchema>;
+
+export const updatePinterestPinSchema = z.object({
+  id: z.string().min(1),
+  status: pinterestPinStatusSchema.optional(),
+  scheduledAt: z.string().optional(),
+});
+export type UpdatePinterestPinInput = z.infer<typeof updatePinterestPinSchema>;
+
+export const pinterestPinRecordSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  board: z.string(),
+  designSlug: z.string(),
+  imageUrl: z.string(),
+  destinationUrl: z.string(),
+  keywords: z.string(),
+  status: pinterestPinStatusSchema,
+  scheduledAt: z.string(),
+  publishedAt: z.string().nullable(),
+});
+export type PinterestPinRecordDTO = z.infer<typeof pinterestPinRecordSchema>;
+
+
