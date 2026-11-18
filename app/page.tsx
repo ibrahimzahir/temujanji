@@ -46,14 +46,14 @@ export default async function Home() {
       <CoupleConvergenceScroll />
 
       {/* -------------------------------------------------------------------- */}
-      {/* 5. 3D SCROLL-OPENING PLUM FLORAL INVITATION CARD                     */}
-      {/* -------------------------------------------------------------------- */}
-      <PlumCardOpenScroll />
-
-      {/* -------------------------------------------------------------------- */}
-      {/* 5B. PURPLE ENVELOPE & CARD WITH FLOWERS PARTING ON SCROLL            */}
+      {/* 5. PURPLE ENVELOPE & CARD WITH FLOWERS PARTING ON SCROLL             */}
       {/* -------------------------------------------------------------------- */}
       <PurpleFlatlayScroll />
+
+      {/* -------------------------------------------------------------------- */}
+      {/* 5B. 3D SCROLL-OPENING PLUM FLORAL INVITATION CARD                    */}
+      {/* -------------------------------------------------------------------- */}
+      <PlumCardOpenScroll />
 
       {/* -------------------------------------------------------------------- */}
       {/* 4. DUAL-PHONE SCROLL PARALLAX & LIVE PERSONALIZATION SHOWCASE        */}

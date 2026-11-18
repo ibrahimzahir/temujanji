@@ -43,10 +43,20 @@ export function PurpleFlatlayScroll() {
   const leftFlowerOpacity = useTransform(smoothProgress, [0, 0.8, 1], [1, 0.95, 0.78]);
 
   const cueOpacity = useTransform(smoothProgress, [0, 0.3], [1, 0]);
+  const stageParallaxY = useTransform(smoothProgress, [0.6, 1], [0, -28]);
+  const stageParallaxScale = useTransform(smoothProgress, [0.6, 1], [1, 0.96]);
+  const stageParallaxOpacity = useTransform(smoothProgress, [0.7, 1], [1, 0.86]);
 
   return (
     <section className="purple-flatlay-runway" ref={containerRef}>
-      <div className="purple-flatlay-sticky">
+      <motion.div
+        className="purple-flatlay-sticky"
+        style={{
+          y: stageParallaxY,
+          scale: stageParallaxScale,
+          opacity: stageParallaxOpacity
+        }}
+      >
         <div className="purple-flatlay-glow" aria-hidden />
 
         <div className="shell purple-flatlay-header">
@@ -131,7 +141,7 @@ export function PurpleFlatlayScroll() {
             />
           </motion.div>
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }

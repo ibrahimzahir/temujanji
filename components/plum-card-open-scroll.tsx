@@ -21,7 +21,15 @@ export function PlumCardOpenScroll() {
     offset: ["start start", "end end"]
   });
 
+  const { scrollYProgress: entryProgress } = useScroll({
+    target: containerRef,
+    offset: ["start end", "start start"]
+  });
+
   const smoothProgress = useSpring(scrollYProgress, SPRING_CONFIG);
+  const smoothEntry = useSpring(entryProgress, SPRING_CONFIG);
+  const entryY = useTransform(smoothEntry, [0, 1], [36, 0]);
+  const entryOpacity = useTransform(smoothEntry, [0, 0.7], [0.45, 1]);
 
   // --------------------------------------------------------------------------
   // 3D CARD OPENING + MULTI-DEPTH FLOWERS PARALLAX
@@ -47,8 +55,8 @@ export function PlumCardOpenScroll() {
   const ctaY = useTransform(smoothProgress, [0.58, 0.78], [16, 0]);
 
   return (
-    <section className="plum-card-runway" ref={containerRef} id="pengalaman-tamu">
-      <div className="plum-card-sticky">
+    <section className="plum-card-runway plum-card-overlap" ref={containerRef} id="pengalaman-tamu">
+      <motion.div className="plum-card-sticky" style={{ y: entryY, opacity: entryOpacity }}>
         <div className="plum-card-bg-glow" aria-hidden />
 
         {/* Section Editorial Header */}
@@ -149,7 +157,7 @@ export function PlumCardOpenScroll() {
             </Link>
           </Button>
         </motion.div>
-      </div>
+      </motion.div>
     </section>
   );
 }
