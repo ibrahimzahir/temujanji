@@ -7,15 +7,25 @@ export function proxy(request: NextRequest) {
   const parsedRole = studioRoleSchema.safeParse(headerRole ?? cookieRole ?? "admin");
   const activeRole = parsedRole.success ? parsedRole.data : "admin";
 
+  const requestId =
+    request.headers.get("x-request-id") ?? crypto.randomUUID();
+  const clientIp =
+    request.headers.get("cf-connecting-ip") ??
+    request.headers.get("x-forwarded-for") ??
+    "127.0.0.1";
+
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-studio-role", activeRole);
   requestHeaders.set("x-temujanji-proxy", "active");
+  requestHeaders.set("x-request-id", requestId);
+  requestHeaders.set("x-client-ip", clientIp);
 
   const response = NextResponse.next({
     request: { headers: requestHeaders },
   });
   response.headers.set("x-studio-role", activeRole);
   response.headers.set("x-temujanji-proxy", "active");
+  response.headers.set("x-request-id", requestId);
   return response;
 }
 
