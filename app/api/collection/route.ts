@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { withStudioApi } from "@/lib/api-middleware";
+import { db } from "@/lib/db";
 import {
   deleteDesignTemplate,
   getCollectionData,
@@ -47,29 +49,37 @@ export async function GET() {
   });
 }
 
-export async function PUT(request: Request) {
-  try {
-    const body = await request.json();
-    const parsed = sectionSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Data bagian koleksi tidak valid", issues: parsed.error.issues },
-        { status: 400 }
-      );
-    }
-    const updated = await updateCollectionCopy(parsed.data);
+export const PUT = withStudioApi(
+  { roles: ["admin", "dev", "editor"], schema: sectionSchema },
+  async ({ role, data }) => {
+    const updated = await updateCollectionCopy(data);
+    await db.auditLog.create({
+      data: {
+        actorRole: role,
+        action: "COLLECTION_COPY_UPDATED",
+        target: "CollectionSectionConfig",
+        detail: `Judul koleksi diperbarui: "${data.titleLine1} ${data.titleHighlight}".`
+      }
+    });
     return NextResponse.json(updated);
-  } catch {
-    return NextResponse.json({ error: "Gagal menyimpan pengaturan koleksi" }, { status: 500 });
   }
-}
+);
 
-export async function POST(request: Request) {
-  try {
+export const POST = withStudioApi(
+  { roles: ["admin", "dev", "editor"] },
+  async ({ role, request }) => {
     const body = await request.json();
 
     if (body?.action === "reset") {
       const reset = await resetCollectionData();
+      await db.auditLog.create({
+        data: {
+          actorRole: role,
+          action: "COLLECTION_RESET",
+          target: "DesignTemplate",
+          detail: "Koleksi tema direset ke bawaan studio."
+        }
+      });
       return NextResponse.json(reset);
     }
 
@@ -79,6 +89,14 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Slug wajib diisi" }, { status: 400 });
       }
       const updated = await deleteDesignTemplate(slug);
+      await db.auditLog.create({
+        data: {
+          actorRole: role,
+          action: "THEME_DELETED",
+          target: slug,
+          detail: `Tema undangan "${slug}" dihapus.`
+        }
+      });
       return NextResponse.json(updated);
     }
 
@@ -91,11 +109,17 @@ export async function POST(request: Request) {
         );
       }
       const updated = await upsertDesignTemplate(parsed.data);
+      await db.auditLog.create({
+        data: {
+          actorRole: role,
+          action: "THEME_UPSERTED",
+          target: parsed.data.slug,
+          detail: `Tema "${parsed.data.name}" (${parsed.data.category}) disimpan.`
+        }
+      });
       return NextResponse.json(updated);
     }
 
     return NextResponse.json({ error: "Aksi tidak dikenali" }, { status: 400 });
-  } catch {
-    return NextResponse.json({ error: "Gagal memproses permintaan koleksi" }, { status: 500 });
   }
-}
+);

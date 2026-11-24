@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { withStudioApi } from "@/lib/api-middleware";
+import { db } from "@/lib/db";
 import {
   getSiteSections,
   resetSiteSections,
@@ -80,38 +82,38 @@ export async function GET() {
   });
 }
 
-export async function PUT(request: Request) {
-  try {
-    const body = await request.json();
-    const parsed = siteSectionsSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Data bagian situs tidak valid", issues: parsed.error.issues },
-        { status: 400 }
-      );
-    }
-    const updated = await updateSiteSections(parsed.data);
+export const PUT = withStudioApi(
+  { roles: ["admin", "dev", "editor"], schema: siteSectionsSchema },
+  async ({ role, data }) => {
+    const updated = await updateSiteSections(data);
+    await db.auditLog.create({
+      data: {
+        actorRole: role,
+        action: "SITE_SECTIONS_UPDATED",
+        target: "SiteSectionsConfig",
+        detail: "Konten Proses, Paket, Testimoni, FAQ, dan Footer diperbarui."
+      }
+    });
     return NextResponse.json(updated);
-  } catch {
-    return NextResponse.json(
-      { error: "Gagal menyimpan konfigurasi bagian situs" },
-      { status: 500 }
-    );
   }
-}
+);
 
-export async function POST(request: Request) {
-  try {
+export const POST = withStudioApi(
+  { roles: ["admin", "dev", "editor"] },
+  async ({ role, request }) => {
     const body = await request.json();
     if (body?.action === "reset") {
       const reset = await resetSiteSections();
+      await db.auditLog.create({
+        data: {
+          actorRole: role,
+          action: "SITE_SECTIONS_RESET",
+          target: "SiteSectionsConfig",
+          detail: "Konten bagian situs direset ke bawaan studio."
+        }
+      });
       return NextResponse.json(reset);
     }
     return NextResponse.json({ error: "Aksi tidak dikenali" }, { status: 400 });
-  } catch {
-    return NextResponse.json(
-      { error: "Gagal memproses permintaan bagian situs" },
-      { status: 500 }
-    );
   }
-}
+);
